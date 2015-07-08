@@ -2,7 +2,40 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+
+    jshint: {
+      files: [
+        "Gruntfile.js", "public/client/*.js", "test/ServerSpec.js", "app/**/*.js", "lib/*.js", "server-config.js", "server.js"
+        ],
+      options: {
+        force: 'true',
+        jshintrc: '.jshintrc',
+        ignores: [
+          'public/lib/**/*.js',
+          'public/dist/**/*.js'
+        ]
+      }
+    },
+
     concat: {
+      options: {
+        separator: ";"
+      },
+      dist:{
+        src:["public/client/*.js", "public/lib/*.js"],
+        dest: 'public/dist/<%= pkg.name %>.js'
+      }
+    },
+
+    uglify: {
+      options: {
+        banner: '/*! <%= pkg.name %> <%= grunt.template.today("dd-mm-yyyy") %> */\n'
+      },
+      dist: {
+        files: {
+          'public/dist/<%= pkg.name %>.min.js': ['<%= concat.dist.dest %>']
+        }
+      }
     },
 
     mochaTest: {
@@ -20,24 +53,12 @@ module.exports = function(grunt) {
       }
     },
 
-    uglify: {
-    },
-
-    jshint: {
-      files: [
-        // Add filespec list here
-      ],
-      options: {
-        force: 'true',
-        jshintrc: '.jshintrc',
-        ignores: [
-          'public/lib/**/*.js',
-          'public/dist/**/*.js'
-        ]
-      }
-    },
 
     cssmin: {
+      build: {
+          src: "public/*.css",
+          dest: "public/dist/style.min.css"
+      }
     },
 
     watch: {
@@ -51,6 +72,7 @@ module.exports = function(grunt) {
           'uglify'
         ]
       },
+
       css: {
         files: 'public/*.css',
         tasks: ['cssmin']
@@ -59,6 +81,14 @@ module.exports = function(grunt) {
 
     shell: {
       prodServer: {
+        command: [
+        'cp server.js public/dist/server.js',
+        'cp package.json public/dist/package.json',
+        'cp server-config.js public/dist/server-config.js',
+        'cp -r app public/dist/app',
+        'cp -r db public/dist/db',
+        'cp -r lib public/dist/lib'
+        ].join('&&')
       }
     },
   });
@@ -94,6 +124,11 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('build', [
+      'jshint',
+      'concat',
+      'uglify',
+      'cssmin',
+      'shell'
   ]);
 
   grunt.registerTask('upload', function(n) {
@@ -106,6 +141,9 @@ module.exports = function(grunt) {
 
   grunt.registerTask('deploy', [
     // add your deploy tasks here
+    //test
+    //build
+    //upload --prod to deploy to heroku
   ]);
 
 
